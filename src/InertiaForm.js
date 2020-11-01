@@ -154,11 +154,22 @@ class InertiaForm {
             }
         }
 
-        if (requestType === 'delete') {
-            return this.__inertia[requestType](url, { ... options, onSuccess })
-        }
+        const { grecaptcha } = window;
 
-        return this.__inertia[requestType](url, this.hasFiles() ? objectToFormData(this.data()) : this.data(), { ... options, onSuccess })
+        return grecaptcha.ready(() => {
+            grecaptcha.execute(window.recaptcha_key, {
+                action: 'submit',
+            }).then((token) => {
+               const data = this.data();
+               data.token = token;
+
+                if (requestType === 'delete') {
+                    return this.__inertia[requestType](url, { ... options, onSuccess })
+                }
+
+                return this.__inertia[requestType](url, this.hasFiles() ? objectToFormData(data) : data, { ... options, onSuccess })
+            });
+        })
     }
 
     hasFiles() {
